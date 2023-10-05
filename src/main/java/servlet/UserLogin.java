@@ -9,6 +9,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -50,17 +51,20 @@ public class UserLogin extends HttpServlet {
 
 
     @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         String action = request.getParameter("action");
         if (action.equals("login")) {
             String email = request.getParameter("email");
             String password = request.getParameter("password");
 
 
-            int resp = userRepo.login(email, password);
+            int resp = userRepo.login(email, password,request);
 
             if (resp == 1) {
-                response.getWriter().println("Logged in successfully!");
+                HttpSession session = request.getSession();
+                session.setAttribute("loggedIn", true);
+                response.sendRedirect("/setting");
+//                request.getRequestDispatcher("/jsp/settings.jsp").forward(request,response);
             } else {
                 response.getWriter().println("Something went wrong!");
             }

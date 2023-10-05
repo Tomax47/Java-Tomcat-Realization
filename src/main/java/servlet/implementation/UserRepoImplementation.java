@@ -3,6 +3,8 @@ package servlet.implementation;
 import model.User;
 import servlet.repo.UserRepo;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,6 +20,7 @@ public class UserRepoImplementation implements UserRepo<User> {
     private String FIND_ALL_USERS = "SELECT * FROM users_table";
     private String FIND_ALL_BY_AGE = "SELECT * FROM users_table WHERE age=";
     private String FIND_USER_BY_EMAIL = "SELECT * FROM users_table WHERE email=";
+    private String SAVE_COOKIE = "INSERT INTO users_cookies (user_id, cookie_uuid) VALUES ";
 
     public UserRepoImplementation(Connection connection, Statement statement) {
         this.connection = connection;
@@ -37,11 +40,14 @@ public class UserRepoImplementation implements UserRepo<User> {
         System.out.println(user.getEmail()+", with passwd => "+user.getPassword()+" has been registered!");
     }
 
-    public int login(String email, String password) {
+    public int login(String email, String password, HttpServletRequest request) {
 
         User user = findUserByEmail(email);
         if (user != null) {
             if (user.getPassword().equals(password)) {
+
+                HttpSession session = request.getSession();
+                session.setAttribute("userId", user.getId());
                 return 1;
             } else {
                 System.out.println("Incorrect user credentials!");
@@ -144,4 +150,15 @@ public class UserRepoImplementation implements UserRepo<User> {
             throw new IllegalArgumentException(e);
         }
     }
+
+    public void saveCookieToDatabase(String cookieUUID, long userId) {
+        String PSQL_COOKIE_REGISTER = SAVE_COOKIE + "(" + userId + ", '" + cookieUUID + "')";
+        try {
+            statement.executeUpdate(PSQL_COOKIE_REGISTER);
+            System.out.println("Cookie UUID has been saved in the database!");
+        } catch (SQLException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
 }
