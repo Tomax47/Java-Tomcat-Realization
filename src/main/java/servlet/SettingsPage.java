@@ -44,18 +44,24 @@ public class SettingsPage extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//        Cookie[] color = request.getCookies();
-//        for (int i = 0; i < color.length; i++) {
-//            System.out.println(color[i].getValue() + " " + color[i].getName());
-//        }
+        Cookie[] cookies = request.getCookies();
 
-        HttpSession session = request.getSession(false);
-
-        if (session != null && session.getAttribute("loggedIn") != null) {
-            request.getRequestDispatcher("/jsp/settings.jsp").forward(request, response);
-        } else {
-            response.sendRedirect("/login");
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("color")) {
+                    String color = cookie.getValue();
+                    request.setAttribute("selectedColor", color);
+                }
+                if (cookie.getName().equals("cookie_uuid")) {
+                    String uuid = cookie.getValue();
+                    if (userRepo.checkUserByCookieUUID(uuid)) {
+                        HttpSession session = request.getSession();
+                        session.setAttribute("loggedIn", true);
+                    }
+                }
+            }
         }
+        request.getRequestDispatcher("/jsp/settings.jsp").forward(request, response);
 
     }
 
@@ -66,23 +72,24 @@ public class SettingsPage extends HttpServlet {
 
         //Cookie to save into the db
         String cookieUUID = UUID.randomUUID().toString();
-        userRepo.saveCookieToDatabase(cookieUUID, getUserIdFromSession(request));
+        userRepo.saveCookieToDatabase(cookieUUID, getUserIdFromSession(request, response));
 
         //We generate an uuid and then add it in the Cookie (first one is for the name "whatever the name is", the second is for the uuid)
         Cookie colorCookie = new Cookie("color", color);
         response.addCookie(colorCookie);
         //max age -1 deletes the cookie after closing the browser, 0 delete it right away!
         // the parameter is taken in seconds
-        colorCookie.setMaxAge(60);
+        colorCookie.setMaxAge(240);
         response.sendRedirect("/setting");
     }
 
-    private long getUserIdFromSession(HttpServletRequest request) {
+    private long getUserIdFromSession(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession(false);
 
         if (session != null && session.getAttribute("loggedIn") != null) {
             return getLoggedInUserId(session);
         } else {
+            response.getWriter().println("User ain't logged in!");
             throw new IllegalStateException("User is not logged in.");
         }
     }

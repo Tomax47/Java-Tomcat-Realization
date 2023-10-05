@@ -161,4 +161,16 @@ public class UserRepoImplementation implements UserRepo<User> {
         }
     }
 
+    public boolean checkUserByCookieUUID(String cookieUUID) {
+        String CHECK_USER_BY_COOKIE_UUID = "SELECT * FROM users_cookies WHERE cookie_uuid='" + cookieUUID + "'";
+
+        try {
+            ResultSet resultSet = statement.executeQuery(CHECK_USER_BY_COOKIE_UUID);
+
+            return resultSet.next();
+        } catch (SQLException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
 }

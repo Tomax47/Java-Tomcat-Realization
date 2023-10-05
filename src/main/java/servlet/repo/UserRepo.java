@@ -15,4 +15,6 @@ public interface UserRepo<T> {
     List<T> findAllByAge(int age);
     User findUserByEmail(String email);
     void saveCookieToDatabase(String cookieUUID, long userId);
+
+    boolean checkUserByCookieUUID(String cookieUUID);
 }
